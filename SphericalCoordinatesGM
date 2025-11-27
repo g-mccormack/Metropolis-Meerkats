@@ -1,0 +1,66 @@
+function samples = spherical_coordinate(n, theta, phi,burn)
+
+
+    samples = zeros(n-burn,3);
+
+    % Step size for proposals
+    sigma = 0.1;
+
+    for i = 1:n
+        
+        % CREATE NOISE (Normal N(0, sigma))
+        theta_noise = sigma * randn();
+        phi_noise   = sigma * randn();
+        
+        % PROPOSE NEW ANGLES
+        proposed_theta = theta + theta_noise;
+        proposed_phi   = phi   + phi_noise;
+
+        % WRAP ANGLES
+        % Keep theta in [0, pi]
+        if proposed_theta < 0 || proposed_theta > pi
+            % Reject automatically if outside range
+            samples(i,:) = toCartesian(theta, phi);
+            continue;
+        end
+        
+        % Wrap phi into [0, 2*pi)
+        proposed_phi = mod(proposed_phi, 2*pi);
+
+        % ACCEPTANCE PROBABILITY
+        alpha = min(1, sin(proposed_theta) / sin(theta));
+
+        % ACCEPT OR REJECT
+        if rand() < alpha
+            theta = proposed_theta;
+            phi   = proposed_phi;
+        end
+        if i > burn;
+        % SAVE SAMPLE IN CARTESIAN
+        samples(i,:) = toCartesian(theta, phi);
+        end
+    end
+end
+
+% Spherical Coordinates to Cartesian
+function xyz = toCartesian(theta, phi)
+    x = sin(theta) * cos(phi);
+    y = sin(theta) * sin(phi);
+    z = cos(theta);
+    xyz = [x, y, z];
+end
+
+n = 20000;
+theta0 = pi/2;   
+phi0 = 0;        
+burn = 10000; 
+
+samples = spherical_coordinate(n, theta0, phi0,burn)
+
+
+figure;
+scatter3(samples(:,1), samples(:,2), samples(:,3), 5, 'filled');
+axis equal;              % makes sphere look round
+xlabel('x'); ylabel('y'); zlabel('z');
+title('Samples from MH on the Sphere (Spherical Coordinates)');
+grid on;
