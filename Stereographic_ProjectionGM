@@ -1,0 +1,90 @@
+function samples = stereographic_transformation(n, X, Y, Z, burn)
+    samples = zeros(n-burn,3);
+
+    % Step size for proposals
+    sigma = 1;
+
+    for i = 1:n
+        
+        % Stereographic projection
+        [x, y] = toPlane(X, Y, Z);
+
+        % CREATE NOISE (Normal N(0, sigma))
+        x_noise = sigma * randn();
+        y_noise = sigma * randn();
+        
+        % PROPOSE NEW PLANE POINT
+        proposed_x = x + x_noise;
+        proposed_y = y + y_noise;
+
+        % ACCEPTANCE PROBABILITY (Jacobian ratio)
+        J_xy = 4 / (1 + x^2 + y^2)^2;
+        J_prop = 4 / (1 + proposed_x^2 + proposed_y^2)^2;
+        
+        alpha = min(1, J_prop / J_xy);
+
+        % ACCEPT OR REJECT
+        if rand() < alpha
+            x = proposed_x;
+            y = proposed_y;
+        end
+
+        % Convert accepted (or old) plane point back to sphere
+        [X, Y, Z] = toSphere(x, y);
+
+        % SAVE SAMPLE
+        if i > burn
+            samples(i-burn,:) = [X, Y, Z];
+        end
+    end
+end
+
+
+% Stereographic Projection
+
+function [Xp, Yp] = toPlane(X, Y, Z)
+    t = 1/(1 - Z);
+    Xp = t * X;
+    Yp = t * Y;
+end
+
+
+% Inverse Stereographic Projection 
+
+function [X, Y, Z] = toSphere(x, y)
+    t = 2/(1 + x^2 + y^2);
+    X = t * x;
+    Y = t * y;
+    Z = 1 - t;
+end
+
+
+% RUN SCRIPT
+
+n = 5000;
+X = 0;
+Y = 1;
+Z = 0;  
+
+burn = 1000;
+
+
+
+samples = stereographic_transformation(n, X, Y, Z, burn);
+
+
+
+figure;
+scatter3(samples(:,1), samples(:,2), samples(:,3), 8, 'filled');
+axis equal;
+xlabel('x');
+ylabel('y');
+zlabel('z');
+title('Samples from Metropolis–Hastings Using Stereographic Projection');
+grid on;
+
+% Draw reference sphere wireframe
+hold on;
+[Xs, Ys, Zs] = sphere(40);
+mesh(Xs, Ys, Zs, 'EdgeColor', [0.6 0.6 0.6], 'FaceAlpha', 0.05);
+
