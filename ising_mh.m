@@ -25,10 +25,11 @@ function Mvals = ising_mh(L, T, steps)
             spins(i,j) = -spins(i,j);
         end
         
-        % record magnetisation occasionally
+        % record magnetisation periodically
         if mod(s, 100) == 0
             Mvals(idx) = mean(spins(:));
             idx = idx + 1;
         end
     end
 end
+
