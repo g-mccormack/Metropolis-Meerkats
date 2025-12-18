@@ -1,5 +1,5 @@
 function Mvals = ising_mh(L, T, steps)
-    % L: lattice size (L x L)
+    % L: lattice size
     % T: temperature
     % steps: number of MH iterations
     
@@ -32,4 +32,5 @@ function Mvals = ising_mh(L, T, steps)
         end
     end
 end
+
 
